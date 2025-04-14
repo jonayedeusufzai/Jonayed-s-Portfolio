@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="description" content="Jonayed Eusufzai's portfolio - AI, Robotics, Flutter & CSE Projects">
+  <meta property="og:title" content="Jonayed Eusufzai's Portfolio" />
+  <meta property="og:description" content="Explore Jonayed's interactive CLI-style portfolio with Matrix background, CSE projects, and contact info." />
+  <title>Jonayed's Terminal Portfolio</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    :root {
+      --terminal-bg: #1e1e1e;
+      --terminal-text: #f0f0f0;
+      --accent: #43bff0;
+      --cursor: #43bff0;
+      --red: #ff5f56;
+      --yellow: #ffbd2e;
+      --green: #27c93f;
+      --prompt: #43bff0;
+      --command: #f0f0f0;
+      --output: #a0a0a0;
+    }
+
+    .light-mode {
+      --terminal-bg: #f0f0f0;
+      --terminal-text: #333333;
+      --accent: #007acc;
+      --cursor: #007acc;
+      --red: #ff5f56;
+      --yellow: #ffbd2e;
+      --green: #27c93f;
+      --prompt: #007acc;
+      --command: #333333;
+      --output: #666666;
+      --body-bg: #e0e0e0;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Courier New', monospace;
+    }
+
+    body {
+      background-color: var(--body-bg, #121212);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      color: var(--terminal-text);
+      overflow: hidden;
+      transition: background-color 0.3s ease;
+    }
+
+    #matrix-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: -2;
+      width: 100vw;
+      height: 100vh;
+      background: var(--body-bg, #121212);
+    }
+
+    .terminal-container {
+      position: relative;
+      width: 100%;
+      max-width: 900px;
+      margin: 2rem;
+      z-index: 1;
+    }
+
+    .terminal {
+      background-color: var(--terminal-bg);
+      border-radius: 8px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      overflow: hidden;
+      position: relative;
+      height: 500px;
+      display: flex;
+      flex-direction: column;
+      transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .terminal-header {
+      display: flex;
+      align-items: center;
+      padding: 0.5rem 1rem;
+      background-color: #2a2a2a;
+      border-bottom: 1px solid #333;
+    }
+
+    .light-mode .terminal-header {
+      background-color: #e0e0e0;
+      border-bottom: 1px solid #ccc;
+    }
+
+    .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      margin-right: 6px;
+    }
+
+    .red { background-color: var(--red); }
+    .yellow { background-color: var(--yellow); }
+    .green { background-color: var(--green); }
+
+    .terminal-title {
+      margin-left: 10px;
+      font-size: 0.8rem;
+      color: #888;
+    }
+
+    .light-mode .terminal-title {
+      color: #666;
+    }
+
+    .terminal-body {
+      flex: 1;
+      padding: 1.5rem;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: #444 #2a2a2a;
+    }
+
+    .light-mode .terminal-body {
+      scrollbar-color: #ccc #e0e0e0;
+    }
+
+    .terminal-body::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .terminal-body::-webkit-scrollbar-track {
+      background: #2a2a2a;
+    }
+
+    .light-mode .terminal-body::-webkit-scrollbar-track {
+      background: #e0e0e0;
+    }
+
+    .terminal-body::-webkit-scrollbar-thumb {
+      background-color: #444;
+      border-radius: 3px;
+    }
+
+    .light-mode .terminal-body::-webkit-scrollbar-thumb {
+      background-color: #ccc;
+    }
+
+    .line {
+      margin-bottom: 1rem;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      position: relative;
+    }
+
+    .prompt { color: var(--prompt); margin-right: 8px; }
+    .command { color: var(--command); }
+    .output { color: var(--output); margin-left: 1.5rem; }
+    .cursor {
+      display: inline-block;
+      width: 8px;
+      height: 16px;
+      background-color: var(--cursor);
+      animation: blink 1s infinite;
+      vertical-align: middle;
+      margin-left: 2px;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+
+    .profile-img {
+      position: absolute;
+      right: 2rem;
+      bottom: 2rem;
+      width: auto;
+      height: 180px;
+      border-radius: 50%;
+      object-fit: contain;
+      border: 3px solid var(--accent);
+      box-shadow: 0 0 20px rgba(67, 191, 240, 0.3);
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.5s ease 3s;
+    }
+    /* for mobile resposes */
+    @media (max-width: 768px) {
+      .profile-img {
+        height : 120px;
+        right : 1 rem;
+        bottom : 1 rem;
+      }
+    }
+    @media (max-width: 480px) {
+      .profile-img {
+        height: 100px;
+      }
+    }
+
+    .profile-img.loaded {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .social-links {
+      display: flex;
+      gap: 1rem;
+      margin-top: 1.5rem;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.5s ease 3.5s;
+    }
+
+    .social-links.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .social-links a {
+      color: var(--terminal-text);
+      font-size: 1.5rem;
+      transition: color 0.3s ease;
+    }
+
+    .social-links a:hover {
+      color: var(--accent);
+    }
+
+    .project-link {
+      color: var(--accent);
+      text-decoration: none;
+      cursor: pointer;
+      transition: color 0.3s ease;
+    }
+
+    .project-link:hover {
+      text-decoration: underline;
+    }
+
+    .theme-toggle {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: var(--terminal-bg);
+      color: var(--terminal-text);
+      border: none;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 100;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      transition: all 0.3s ease;
+    }
+
+    .theme-toggle:hover {
+      transform: scale(1.1);
+    }
+
+    .email-form {
+      display: none;
+      margin-top: 1rem;
+      padding: 1rem;
+      background: rgba(67, 191, 240, 0.1);
+      border-radius: 5px;
+      border-left: 3px solid var(--accent);
+    }
+
+    .email-form input,
+    .email-form textarea {
+      width: 100%;
+      padding: 0.5rem;
+      margin-bottom: 0.5rem;
+      background: var(--terminal-bg);
+      border: 1px solid var(--output);
+      color: var(--terminal-text);
+      border-radius: 3px;
+    }
+
+    .email-form button {
+      background: var(--accent);
+      color: var(--terminal-text);
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    .email-form button:hover {
+      background: #2a9fd8;
+    }
+
+    @media (max-width: 768px) {
+      .terminal {
+        height: 400px;
+      }
+      .profile-img {
+        width: 100px;
+        height: 100px;
+        right: 1rem;
+        bottom: 1rem;
+      }
+      .terminal-body {
+        padding: 1rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .terminal {
+        height: 350px;
+      }
+      .profile-img { display: none; }
+    }
+    .suggestion {
+        color: #666;
+        opacity: 0.7;
+      }
+    .terminal-footer {
+        padding: 12px 0;
+        background: rgba(42, 42, 42, 0.9);
+        border-bottom-left-radius: 8px;
+        border-bottom-right-radius: 8px;
+        backdrop-filter: blur(5px);
+        margin-top: -1px; /* Connects with terminal */
+      }
+    
+    .light-mode .terminal-footer {
+        background: rgba(224, 224, 224, 0.9);
+      }
+    
+    .social-icons {
+        display: flex;
+        justify-content: center;
+        gap: 1.5rem;
+        padding: 0 1rem;
+      }
+    
+    .social-icons a {
+        color: var(--terminal-text);
+        font-size: 1.3rem;
+        transition: all 0.3s ease;
+        opacity: 0.8;
+      }
+    
+    .social-icons a:hover {
+        color: var(--accent);
+        opacity: 1;
+        transform: translateY(-2px) scale(1.1);
+      }
+    
+      /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .social-icons {
+          gap: 1rem;
+        }
+        .social-icons a {
+          font-size: 1.1rem;
+        }
+      }
+  </style>
+</head>
+<body>
+<canvas id="matrix-canvas"></canvas>
+<button class="theme-toggle" id="theme-toggle">
+  <i class="fas fa-moon"></i>
+</button>
+<div class="terminal-container">
+  <div class="terminal">
+    <div class="terminal-header">
+      <span class="dot red"></span>
+      <span class="dot yellow"></span>
+      <span class="dot green"></span>
+      <span class="terminal-title">jonayed@portfolio: ~</span>
+    </div>
+    <div class="terminal-body" id="terminal-body"></div>
+    <!-- Profile Image with fallback -->
+    <img src="images/pic03.jpg" alt="Jonayed Eusufzai" class="profile-img" id="profile-img" 
+         onerror="this.onerror=null;this.src='https://via.placeholder.com/150?text=JE';this.style.border='none'" />
+  </div>
+  
+  <!-- Improved Social Footer -->
+  <div class="terminal-footer">
+    <div class="social-icons">
+      <a href="https://github.com/jonayedeusufzai" target="_blank" rel="noopener noreferrer" title="GitHub">
+        <i class="fab fa-github"></i>
+      </a>
+      <a href="https://linkedin.com/in/jonayed-eusufzai-4a2a15265" target="_blank" rel="noopener noreferrer" title="LinkedIn">
+        <i class="fab fa-linkedin-in"></i>
+      </a>
+      <a href="https://wa.me/01610741601" target="_blank" rel="noopener noreferrer" title="WhatsApp">
+        <i class="fab fa-whatsapp"></i>
+      </a>
+      <a href="mailto:jonayedeusufzai2002@gmail.com" title="Email">
+        <i class="fas fa-envelope"></i>
+      </a>
+      <a href="https://twitter.com/Jonayed_Eusuf_Z" target="_blank" rel="noopener noreferrer" title="Twitter/X">
+        <i class="fab fa-x-twitter"></i>
+      </a>
+    </div>
+  </div>
+</div>
+<audio id="keypress-sound" src="https://www.myinstants.com/media/sounds/key-press.mp3" preload="auto"></audio>
+<audio id="enter-sound" src="https://www.myinstants.com/media/sounds/terminal-enter.mp3" preload="auto"></audio>
+<script>
+const commandSuggestions = {
+  'a': 'about',
+  'ab': 'about',
+  's': 'skills',
+  'sk': 'skills',
+  'p': 'projects',
+  'pr': 'projects',
+  'c': 'contact',
+  'co': 'contact',
+  'r': 'resume',
+  're': 'resume',
+  'e': 'email',
+  'em': 'email',
+  'h': 'help',
+  'he': 'help',
+  'cl': 'clear',
+  't': 'theme',
+  'th': 'theme'
+};
+
+    
+// Matrix code effect
+const canvas = document.getElementById('matrix-canvas');
+const ctx = canvas.getContext('2d');
+canvas.height = window.innerHeight;
+canvas.width = window.innerWidth;
+const cseWords = ["int", "main()", "{", "return", "0;", "}", "AI", "ML", "class", "HTML", "CSS", "Dart", "SQL", "NoSQL", "OOP", "loop", "DBMS"];
+const fontSize = 14;
+const columns = canvas.width / fontSize;
+const drops = Array.from({ length: columns }, () => 1);
+function drawMatrix() {
+  ctx.fillStyle = document.body.classList.contains('light-mode') ? "rgba(224, 224, 224, 0.1)" : "rgba(18, 18, 18, 0.1)";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = document.body.classList.contains('light-mode') ? "#007acc" : "#43bff0";
+  ctx.font = fontSize + "px monospace";
+  for (let i = 0; i < drops.length; i++) {
+    const text = cseWords[Math.floor(Math.random() * cseWords.length)];
+    ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+    if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
+    drops[i]++;
+  }
+}
+setInterval(drawMatrix, 120); // slower for better UX
+window.addEventListener("resize", () => {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+});
+
+// Theme switcher
+const themeToggle = document.getElementById('theme-toggle');
+themeToggle.addEventListener('click', () => {
+  document.body.classList.toggle('light-mode');
+  if (document.body.classList.contains('light-mode')) {
+    themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+  } else {
+    themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+  }
+});
+
+// Terminal animation
+const terminalBody = document.getElementById('terminal-body');
+const profileImg = document.getElementById('profile-img');
+const keypressSound = document.getElementById('keypress-sound');
+const enterSound = document.getElementById('enter-sound');
+
+// Resume file URL - replace with your actual resume URL
+const resumeUrl = 'Jonayeds_Resume.pdf';
+
+const commands = {
+  help: {
+    output: `Available commands:
+    - about       : About me
+    - skills      : My technical skills
+    - projects    : My projects
+    - contact     : Contact information
+    - resume      : Download my resume
+    - email       : Send me an email
+    - clear       : Clear terminal
+    - theme       : Toggle light/dark mode`
+  },
+  about: {
+    output: `Hello! I'm Jonayed Eusufzai, a Computer Science enthusiast specializing in AI, Robotics. 
+    I'm passionate about creating innovative solutions that bridge technology and real-world problems. 
+    Currently pursuing my degree in Computer Science and Engineering.`
+  },
+  skills: {
+    output: `Technical Skills:
+    - Languages: Python, Java, Dart, C/C++, JavaScript
+    - Frameworks: Flutter, TensorFlow, PyTorch
+    - AI/ML: Computer Vision, NLP, Neural Networks
+    - Robotics: ROS, Arduino, Raspberry Pi
+    - Web: HTML/CSS, JavaScript, React
+    - Database: SQL, MongoDB, Firebase
+    - Software Testing: Manual Testing, Functional Testing, Regression Testing, Integration Testing, Smoke & Sanity Testing, API Testing, UI/UX Testing, Automation Testing (Basic)`
+  },
+  projects: {
+    output: `Featured Projects:
+    1. <span class="project-link" onclick="showProjectDetails('smart-assistant')">AI Smart Assistant</span> - Voice-controlled assistant with NLP
+    2. <span class="project-link" onclick="showProjectDetails('robot-arm')">Robotic Arm Controller</span> - ROS-based 6-DOF robotic arm
+    3. <span class="project-link" onclick="showProjectDetails('flutter-app')">Flutter E-commerce App</span> - Cross-platform mobile application
+    4. <span class="project-link" onclick="showProjectDetails('computer-vision')">Computer Vision System</span> - Object detection with OpenCV
+    
+    Click on any project for details.`
+  },
+  contact: {
+    output: `Contact Information:
+    - Email: jonayedeusufzai2002@gamil.com
+    - GitHub: github.com/jonayed
+    - LinkedIn: linkedin.com/in/jonayed
+    - Twitter: @jonayed
+    
+    <div class="social-links">
+      <a href="https://github.com/jonayed" target="_blank"><i class="fab fa-github"></i></a>
+      <a href="https://linkedin.com/in/jonayed" target="_blank"><i class="fab fa-linkedin"></i></a>
+      <a href="https://twitter.com/jonayed" target="_blank"><i class="fab fa-twitter"></i></a>
+    </div>`
+  },
+  resume: {
+    output: `Downloading resume... <a href="${'//https:drive.google.com/drive/folders/1V1T_37f8ikO2ZH3m8IAwuLASXfogxUyv?usp=sharing'}" download="Jonayed_Eusufzai_Resume.pdf" style="color: var(--accent);">Click here</a> if download doesn't start automatically.`,
+    action: () => {
+      window.open('https://drive.google.com/drive/folders/1V1T_37f8ikO2ZH3m8IAwuLASXfogxUyv?dmr=1&ec=wgc-drive-hero-goto');
+    }
+  },
+  email: {
+    output: `<div class="email-form" id="email-form">
+      <h3>Send me a message</h3>
+      <input type="text" id="email-name" placeholder="Your Name" required>
+      <input type="email" id="email-address" placeholder="Your Email" required>
+      <textarea id="email-message" rows="4" placeholder="Your Message" required></textarea>
+      <button onclick="sendEmail()">Send Message</button>
+    </div>`,
+    action: () => {
+      document.getElementById('email-form').style.display = 'block';
+    }
+  },
+  theme: {
+    output: `Toggling theme...`,
+    action: () => {
+      themeToggle.click();
+    }
+  }
+};
+
+// Project details
+const projectDetails = {
+  'smart-assistant': {
+    title: 'AI Smart Assistant',
+    description: 'A voice-controlled assistant with natural language processing capabilities. Built with Python and TensorFlow, it can perform tasks like web searches, schedule management, and home automation.',
+    technologies: 'Python, TensorFlow, NLP, Speech Recognition'
+  },
+  'robot-arm': {
+    title: 'Robotic Arm Controller',
+    description: 'A ROS-based 6-degree-of-freedom robotic arm controller with computer vision integration for object manipulation. Implemented inverse kinematics for precise movement control.',
+    technologies: 'ROS, Python, OpenCV, Arduino'
+  },
+  'flutter-app': {
+    title: 'Flutter E-commerce App',
+    description: 'A cross-platform mobile application for an e-commerce platform with features like product catalog, shopping cart, and payment integration. Supports both iOS and Android.',
+    technologies: 'Flutter, Dart, Firebase, Stripe API'
+  },
+  'computer-vision': {
+    title: 'Computer Vision System',
+    description: 'Real-time object detection system using OpenCV and TensorFlow. Capable of identifying and tracking multiple objects in a video stream with 90%+ accuracy.',
+    technologies: 'Python, OpenCV, TensorFlow, YOLO'
+  }
+};
+
+function showProjectDetails(projectId) {
+  const project = projectDetails[projectId];
+  const output = `
+    <strong>${project.title}</strong>
+    <p>${project.description}</p>
+    <p><strong>Technologies:</strong> ${project.technologies}</p>
+    <button onclick="addLine('back')" style="background: var(--accent); color: var(--terminal-text); border: none; padding: 0.3rem 0.6rem; border-radius: 3px; cursor: pointer; margin-top: 0.5rem;">Back to projects</button>
+  `;
+  addLine('output', output);
+}
+
+function sendEmail() {
+  const name = document.getElementById('email-name').value;
+  const email = document.getElementById('email-address').value;
+  const message = document.getElementById('email-message').value;
+  
+  if (!name || !email || !message) {
+    addLine('output', 'Please fill in all fields.');
+    return;
+  }
+  
+  // In a real implementation, you would send this to a server or use a service like Formspree
+  // This is just a simulation
+  addLine('output', `Message sent successfully! I'll get back to you soon at ${email}.`);
+  document.getElementById('email-form').style.display = 'none';
+  
+  // Clear form
+  document.getElementById('email-name').value = '';
+  document.getElementById('email-address').value = '';
+  document.getElementById('email-message').value = '';
+}
+
+function addLine(type, content = '', promptText = 'jonayed@portfolio:~$') {
+  const line = document.createElement('div');
+  line.className = 'line';
+  
+  if (type === 'command') {
+    line.innerHTML = `<span class="prompt">${promptText}</span><span class="command">${content}</span>`;
+    playSound(keypressSound);
+  } else if (type === 'output') {
+    line.innerHTML = `<span class="output">${content}</span>`;
+    playSound(enterSound);
+  } else if (type === 'back') {
+    addLine('output', commands.projects.output);
+    return;
+  }
+  
+  terminalBody.appendChild(line);
+  terminalBody.scrollTop = terminalBody.scrollHeight;
+}
+
+function playSound(sound) {
+  sound.currentTime = 0;
+  sound.play().catch(e => console.log('Audio play failed:', e));
+}
+
+function processCommand(cmd) {
+  cmd = cmd.trim().toLowerCase();
+  
+  if (cmd === 'clear') {
+    terminalBody.innerHTML = '';
+    return;
+  }
+  
+  if (commands[cmd]) {
+    addLine('output', commands[cmd].output);
+    if (commands[cmd].action) {
+      commands[cmd].action();
+    }
+  } else {
+    addLine('output', `Command not found: ${cmd}. Type 'help' for available commands.`);
+  }
+}
+
+// Initialize terminal
+function initTerminal() {
+  const initialLines = [
+    { type: 'output', content: 'Welcome to Jonayed\'s Interactive Portfolio!' },
+    { type: 'output', content: 'Type "help" to see available commands.' },
+    { type: 'command', content: 'help' }
+  ];
+  
+  initialLines.forEach(line => {
+    setTimeout(() => {
+      addLine(line.type, line.content);
+      if (line.type === 'command') {
+        setTimeout(() => processCommand(line.content), 300);
+      }
+    }, initialLines.indexOf(line) * 800);
+  });
+  
+  // Show profile image after delay
+  setTimeout(() => {
+    profileImg.classList.add('loaded');
+  }, 3500);
+  
+  // Show social links if in contact section
+  setTimeout(() => {
+    const socialLinks = document.querySelector('.social-links');
+    if (socialLinks) socialLinks.classList.add('visible');
+  }, 4000);
+}
+
+// Handle user input
+function setupInput() {
+  let input = '';
+  let inputVisible = false;
+  let suggestionElement = null;
+  
+  function showInput() {
+    if (inputVisible) return;
+    inputVisible = true;
+    addLine('command', '', 'jonayed@portfolio:~$ ');
+    const cursor = document.createElement('span');
+    cursor.className = 'cursor';
+    terminalBody.lastChild.appendChild(cursor);
+    // Create suggestion element
+    suggestionElement = document.createElement('span');
+    suggestionElement.className = 'suggestion';
+    suggestionElement.style.color = '#666';
+    suggestionElement.style.marginLeft = '5px';
+    terminalBody.lastChild.appendChild(suggestionElement);
+    terminalBody.scrollTop = terminalBody.scrollHeight;
+  }
+  
+  // Show initial input prompt after animations
+  setTimeout(showInput, 4500);
+  function updateSuggestion() {
+    if (!suggestionElement) return;
+    
+    const suggestion = commandSuggestions[input.toLowerCase()];
+    if (suggestion && suggestion !== input) {
+      suggestionElement.textContent = suggestion;
+    } else {
+      suggestionElement.textContent = '';
+    }
+  }
+  
+  document.addEventListener('keydown', (e) => {
+    if (!inputVisible) showInput();
+    
+    const currentLine = terminalBody.lastChild;
+    const commandElement = currentLine.querySelector('.command');
+    
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      // Use suggestion if Tab was pressed before Enter
+      const suggestion = suggestionElement.textContent;
+      if (suggestion && e.key !== 'Tab') {
+        input = suggestion;
+        commandElement.textContent = input;
+      }
+      processCommand(input);
+      input = '';
+      inputVisible = false;
+      setTimeout(showInput, 100);
+    } 
+    else if (e.key === 'Tab' && suggestionElement.textContent) {
+      e.preventDefault();
+      input = suggestionElement.textContent;
+      commandElement.textContent = input;
+      suggestionElement.textContent = '';
+    }
+    else if (e.key === 'Backspace') {
+      if (input.length > 0) {
+        input = input.slice(0, -1);
+        commandElement.textContent = input;
+        playSound(keypressSound);
+        updateSuggestion();
+      }
+    } 
+    else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
+      input += e.key;
+      commandElement.textContent = input;
+      playSound(keypressSound);
+      updateSuggestion();
+    }
+  });
+}
+  
+  document.addEventListener('keydown', (e) => {
+    if (!inputVisible) showInput();
+    
+    const currentLine = terminalBody.lastChild;
+    const commandElement = currentLine.querySelector('.command');
+    
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      processCommand(input);
+      input = '';
+      inputVisible = false;
+      setTimeout(showInput, 100);
+    } else if (e.key === 'Backspace') {
+      if (input.length > 0) {
+        input = input.slice(0, -1);
+        commandElement.textContent = input;
+        playSound(keypressSound);
+      }
+    } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
+      input += e.key;
+      commandElement.textContent = input;
+      playSound(keypressSound);
+    }
+  });
+
+// Start everything
+window.onload = function() {
+  initTerminal();
+  setupInput();
+};
+
+</script>
+</body>
+</html>
